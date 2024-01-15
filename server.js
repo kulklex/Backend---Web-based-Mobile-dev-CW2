@@ -1,0 +1,124 @@
+const express = require("express");
+const app = express();
+const path = require("path");
+const PORT = process.env.PORT || 5000;
+const cors = require("cors");
+const fs = require("fs");
+const ObjectID = require('mongodb').ObjectId;
+
+// Allow use from any url
+app.use(cors());
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  next();
+});
+
+// Logging middlewares
+app.use((req, res, next) => {
+  console.log("Request IP: " + req.ip);
+  console.log("Request url: " + req.url);
+  console.log("Request type: " + req.method);
+  console.log("Request date: " + new Date());
+  next();
+});
+
+// use static files
+app.use((req, res, next) => {
+  var filePath = path.join(__dirname, "static", req.url);
+  fs.stat(filePath, (err, fileInfo) => {
+    if (err) {
+      next();
+      return;
+    }
+    if (fileInfo.isFile()) {
+      res.sendFile(filePath);
+    } else {
+      next();
+    }
+  });
+});
+
+
+
+// use json data
+app.use(express.json());
+
+// connect to the database
+const { MongoClient } = require('mongodb');
+const uri = "mongodb+srv://kulklex:PHmrdQlNT8qwwClK@cluster0.z1hfgdd.mongodb.net/Kulklex"
+
+
+let db;
+MongoClient.connect(uri, (err, client) => {
+    db = client.db('Kulklex')
+})
+
+
+// get the collection name
+app.param('collectionName', (req, res, next, collectionName) => {
+    req.collection = db.collection(collectionName)
+    return next()
+})
+
+
+// Test api is working
+app.get("/", (req, res, next) => {
+  res.send("Welcome to Lessons");
+});
+
+// Get all lessons
+app.get('/lessons', (req, res, next) => {
+    db.collection('lessons').find({}).toArray((err, results) => {
+        if (err) {
+            console.error(err);
+            return next(err);
+        }
+        res.json(results);
+    });
+});
+
+// Update lesson spaces
+app.put('/lessons', (req, res, next) => {
+    req.body.forEach((item) => {
+        let filter = { _id: new ObjectID(item.id) }
+        let newValue = { $set: {spaces: item.spaces} }
+        let options = { safe: true, multi: false }
+        req.collection.updateOne(filter, newValue, options, (err, result) => {
+            if (err) return next(err)
+        })
+    });
+    res.send({msg: "Spaces updated!"})
+})
+
+// Add a new order
+app.post("/orders", (req, res, next) => {
+    let order = req.body
+    req.collection.insertOne(order, (err, result) => {
+        if (err) return next(err)
+        res.send({msg: "Order added successfully"})
+    })
+})
+
+// Search route
+app.get('/lessons/search', (req, res) => {
+    let searchQuery = req.query.filter
+    req.collection.find({}).toArray((err, results) => {
+        if (err) return next(err)
+        let filteredList = results.filter((lesson) => {
+            return lesson.subject.toLowerCase().match(searchQuery.toLowerCase()) || lesson.location.toLowerCase().match(searchQuery.toLowerCase())
+        });  
+        res.send(filteredList)
+    })
+})
+
+
+// Error Handling
+app.use((req, res) => {
+    res.status(404)
+    res.send("File not found")
+})
+
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+})
