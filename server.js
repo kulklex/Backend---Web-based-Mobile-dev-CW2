@@ -78,7 +78,7 @@ app.get('/lessons', (req, res, next) => {
 });
 
 // Update lesson spaces
-app.put('/lessons', (req, res, next) => {
+app.put('/lessons/:lessonsID', (req, res, next) => {
     req.body.forEach((item) => {
         let filter = { _id: new ObjectID(item.id) }
         let newValue = { $set: {spaces: item.spaces} }
