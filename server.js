@@ -78,22 +78,16 @@ app.get('/lessons', (req, res, next) => {
 });
 
 // Update lesson spaces
-app.put('/lessons/:lessonsID', (req, res, next) => {
-  const lessonId = req.params.lessonID;
-  const newSpaces = req.body[0].spaces; 
-
-  const filter = { _id: new ObjectID(lessonId) };
-  const newValue = { $set: { spaces: newSpaces } };
-  const options = { safe: true, multi: false };
-
-  req.collection.updateOne(filter, newValue, options, (err, result) => {
-      if (err) {
-          console.error(err);
-          return res.status(500).send({ error: 'Internal Server Error' });
-      }
-
-      res.json({ msg: 'Spaces updated!' });
-  });
+app.put('/lessons', (req, res, next) => {
+    req.body.forEach((item) => {
+        let filter = { _id: new ObjectID(item.id) }
+        let newValue = { $set: {spaces: item.spaces} }
+        let options = { safe: true, multi: false }
+        req.collection.updateOne(filter, newValue, options, (err, result) => {
+            if (err) return next(err)
+        })
+    });
+    res.send({msg: "Spaces updated!"})
 })
 
 // Add a new order
