@@ -84,7 +84,9 @@ app.put('/lessons/:lessonID', (req, res, next) => {
         let filter = { _id: new ObjectID(item._id) }
         let newValue = { $set: {spaces: item.spaces} }
         let options = { safe: true, multi: false }
-        req.collection.updateOne(filter, newValue, options, (err, result) => {
+        console.log("Rec.collection: " + req.collection)
+        console.log("\n\nDb.collection: " + db.collection)
+        db.collection.updateOne(filter, newValue, options, (err, result) => {
             if (err) return next(err)
         })
     });
