@@ -54,11 +54,6 @@ MongoClient.connect(uri, (err, client) => {
 })
 
 
-// get the collection name
-app.param('collectionName', (req, res, next, collectionName) => {
-    req.collection = db.collection(collectionName)
-    return next()
-})
 
 
 // Test api is working
@@ -84,8 +79,6 @@ app.put('/lessons/:lessonID', (req, res, next) => {
         let filter = { _id: new ObjectID(item._id) }
         let newValue = { $set: {spaces: item.spaces} }
         let options = { safe: true, multi: false }
-        console.log("Rec.collection: " + req.collection)
-        console.log("\n\nDb.collection: " + db.collection)
         db.collection.updateOne(filter, newValue, options, (err, result) => {
             if (err) return next(err)
         })
