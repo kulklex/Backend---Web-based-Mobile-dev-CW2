@@ -3,8 +3,8 @@ const app = express();
 const path = require("path");
 const PORT = process.env.PORT || 5000;
 const cors = require("cors");
-const fs = require("fs");
 const ObjectID = require("mongodb").ObjectId;
+const morgan = require('morgan')
 
 // Allow use from any url
 app.use(cors());
@@ -22,21 +22,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// use static files
-app.use((req, res, next) => {
-  var filePath = path.join(__dirname, "static", req.url);
-  fs.stat(filePath, (err, fileInfo) => {
-    if (err) {
-      next();
-      return;
-    }
-    if (fileInfo.isFile()) {
-      res.sendFile(filePath);
-    } else {
-      next();
-    }
-  });
-});
+
+// Middleware to serve the static file
+app.use(express.static('static'))
+
+// Error logger
+app.use(morgan('tiny'))
 
 // use json data
 app.use(express.json());
